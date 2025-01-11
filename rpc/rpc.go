@@ -12,7 +12,7 @@ type BaseMessage struct {
 	Method string `json:"method"`
 }
 
-func split(data []byte, _ bool) (advance int, token []byte, err error) {
+func Split(data []byte, _ bool) (advance int, token []byte, err error) {
 	header, content, found := bytes.Cut(data, []byte{'\r', '\n', '\r', '\n'})
 	if !found {
 		return 0, nil, nil
