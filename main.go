@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"log"
 	"os"
 
+	"gdx/lsp"
 	"gdx/rpc"
 )
 
@@ -17,6 +19,15 @@ func getLogger(filename string) *log.Logger {
 	return log.New(logfile, "[gdx-server]", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
+func handleMessage(method string, content []byte, logger *log.Logger) error {
+	switch method {
+	case "initialize":
+		return lsp.HandleInitialize(content, logger)
+	default:
+		return errors.New("invalid method")
+	}
+}
+
 func main() {
 	logger := getLogger("log.txt")
 
@@ -27,12 +38,17 @@ func main() {
 
 	for scanner.Scan() {
 		msg := scanner.Bytes()
-		_, contents, err := rpc.DecodeMessage(msg)
+		method, contents, err := rpc.DecodeMessage(msg, logger)
 		if err != nil {
 			logger.Printf("Got an error: %s", err)
 			continue
 		}
 
-		logger.Printf("%s\n", contents)
+		err = handleMessage(method, contents, logger)
+		if err != nil {
+			logger.Printf("error while handling message: %s", err)
+			continue
+		}
+
 	}
 }

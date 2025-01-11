@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -46,7 +47,7 @@ func EncodeMessage(toBeEncoded any) (string, error) {
 }
 
 // decodes an RPC message returning which method it's using, the contents of the message, and an error if there is one
-func DecodeMessage(msg []byte) (string, []byte, error) {
+func DecodeMessage(msg []byte, logger *log.Logger) (string, []byte, error) {
 	header, content, found := bytes.Cut(msg, []byte{'\r', '\n', '\r', '\n'})
 	if !found {
 		return "", nil, errors.New("unable to find seperator in message")
@@ -62,6 +63,8 @@ func DecodeMessage(msg []byte) (string, []byte, error) {
 	if err := json.Unmarshal(content[:contentLength], &baseMessage); err != nil {
 		return "", nil, err
 	}
+
+	logger.Printf("method: %s\n", baseMessage.Method)
 
 	return baseMessage.Method, content[:contentLength], nil
 
