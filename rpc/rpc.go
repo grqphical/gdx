@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+type BaseMessage struct {
+	Method string `json:"method"`
+}
+
 func split(data []byte, _ bool) (advance int, token []byte, err error) {
 	header, content, found := bytes.Cut(data, []byte{'\r', '\n', '\r', '\n'})
 	if !found {
@@ -41,17 +45,24 @@ func EncodeMessage(toBeEncoded any) (string, error) {
 	return fmt.Sprintf("Content-Length: %d\r\n\r\n%s", contentLength, data), nil
 }
 
-func DecodeMessage(msg []byte, dataOutput any) error {
+// decodes an RPC message returning which method it's using, the contents of the message, and an error if there is one
+func DecodeMessage(msg []byte) (string, []byte, error) {
 	header, content, found := bytes.Cut(msg, []byte{'\r', '\n', '\r', '\n'})
 	if !found {
-		return errors.New("unable to find seperator in message")
+		return "", nil, errors.New("unable to find seperator in message")
 	}
 
 	contentLengthBytes := header[len("Content-Length: "):]
 	contentLength, err := strconv.Atoi(string(contentLengthBytes))
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
-	return json.Unmarshal(content[:contentLength], dataOutput)
+	var baseMessage BaseMessage
+	if err := json.Unmarshal(content[:contentLength], &baseMessage); err != nil {
+		return "", nil, err
+	}
+
+	return baseMessage.Method, content[:contentLength], nil
+
 }

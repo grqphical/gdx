@@ -17,10 +17,9 @@ func TestEncodeMessage(t *testing.T) {
 }
 
 func TestDecodeMessage(t *testing.T) {
-	expected := struct{ Foo string }{Foo: "bar"}
-	message := []byte("Content-Length: 13\r\n\r\n{\"Foo\":\"bar\"}")
+	message := []byte("Content-Length: 16\r\n\r\n{\"method\":\"foo\"}")
 
-	var actual struct{ Foo string }
-	assert.NoError(t, rpc.DecodeMessage(message, &actual))
-	assert.Equal(t, expected, actual, "decoded data is not equal")
+	method, _, err := rpc.DecodeMessage(message)
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", method, "decoded data is not equal")
 }
