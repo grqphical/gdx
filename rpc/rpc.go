@@ -64,8 +64,6 @@ func DecodeMessage(msg []byte, logger *log.Logger) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	logger.Printf("method: %s\n", baseMessage.Method)
-
 	return baseMessage.Method, content[:contentLength], nil
 
 }
