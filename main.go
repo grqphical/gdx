@@ -39,6 +39,9 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 		case "exit":
 			lsp.HandleExit(logger)
 			return nil
+		case "textDocument/didOpen":
+			return lsp.HandleTextDocumentOpen(content, logger)
+
 		}
 
 		return nil

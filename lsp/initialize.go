@@ -7,17 +7,6 @@ import (
 	"log"
 )
 
-type RequestMessage struct {
-	ID     int    `json:"id"`
-	Method string `json:"method"`
-}
-
-type ResponseMessage struct {
-	RPC   string `json:"jsonrpc"`
-	ID    int    `json:"id"`
-	Error any    `json:"error,omitempty"`
-}
-
 type InitializeRequest struct {
 	RequestMessage
 	Params InitializeRequestParams `json:"params"`
@@ -46,6 +35,7 @@ type ServerInfo struct {
 }
 
 type ServerCapabilities struct {
+	TextDocumentSync int `json:"textDocumentSync"`
 }
 
 func HandleInitialize(content []byte, logger *log.Logger) error {
@@ -66,7 +56,9 @@ func HandleInitialize(content []byte, logger *log.Logger) error {
 				Name:    ServerName,
 				Version: ServerVersion,
 			},
-			Capabilities: ServerCapabilities{},
+			Capabilities: ServerCapabilities{
+				TextDocumentSync: 1,
+			},
 		},
 		ResponseMessage: ResponseMessage{
 			RPC: "2.0",
@@ -77,6 +69,8 @@ func HandleInitialize(content []byte, logger *log.Logger) error {
 	if err != nil {
 		return err
 	}
+
+	logger.Println(msg)
 
 	fmt.Printf("%s", msg)
 
