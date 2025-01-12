@@ -1,6 +1,7 @@
 package rpc_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestEncodeMessage(t *testing.T) {
 func TestDecodeMessage(t *testing.T) {
 	message := []byte("Content-Length: 16\r\n\r\n{\"method\":\"foo\"}")
 
-	method, _, err := rpc.DecodeMessage(message)
+	method, _, err := rpc.DecodeMessage(message, log.Default())
 	assert.NoError(t, err)
 	assert.Equal(t, "foo", method, "decoded data is not equal")
 }
