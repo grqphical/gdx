@@ -40,7 +40,9 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 			lsp.HandleExit(logger)
 			return nil
 		case "textDocument/didOpen":
-			return lsp.HandleTextDocumentOpen(content, logger)
+			return lsp.HandleTextDocumentOpen(content, logger, state)
+		case "textDocument/didChange":
+			return lsp.HandleTextDocumentChange(content, logger, state)
 
 		}
 
@@ -49,8 +51,10 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 }
 
 func main() {
-	state := lsp.ServerState{}
-	logger := getLogger("log.txt")
+	state := lsp.ServerState{
+		Files: make(map[string]string),
+	}
+	logger := getLogger("/home/grqphical/development/go/gdx/log.txt")
 
 	logger.Println("starting GDX")
 

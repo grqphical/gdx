@@ -5,6 +5,7 @@ const ServerVersion string = "0.1.0"
 
 type ServerState struct {
 	Shutdown bool
+	Files    map[string]string
 }
 
 type RequestMessage struct {
