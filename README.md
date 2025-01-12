@@ -4,7 +4,7 @@ A language server for Godot/GDScript written in Golang.
 
 The goal of this project is to make an improved and faster language server for working with external editors in your Godot projects.
 
-> **⚠️N NOTE:** This project is in early alpha. It is very unstable and definitely not suitable for use (yet)
+> **⚠️NOTE:** This project is in early alpha. It is very unstable and definitely not suitable for use (yet)
 
 ## Planned Features
 
