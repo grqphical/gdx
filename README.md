@@ -10,11 +10,11 @@ The goal of this project is to make an improved and faster language server for w
 
 - [x] Communication through STDIN/STDOUT (not through localhost)
 
-- [] Autocomplete
+- [ ] Autocomplete
 
-- [] Godot documentation lookups
+- [ ] Godot documentation lookups
 
-- [] Support for static type checking via type annotations
+- [ ] Support for static type checking via type annotations
 
 ## Installation
 
