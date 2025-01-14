@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gdx/rpc"
 	"log"
+
+	"gdx/version"
 )
 
 type InitializeRequest struct {
@@ -60,7 +62,7 @@ func HandleInitialize(content []byte, logger *log.Logger) error {
 		Result: InitializeResult{
 			ServerInfo: ServerInfo{
 				Name:    ServerName,
-				Version: ServerVersion,
+				Version: version.Version,
 			},
 			Capabilities: ServerCapabilities{
 				TextDocumentSync: 1,

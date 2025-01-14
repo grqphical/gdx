@@ -9,6 +9,7 @@ import (
 
 	"gdx/lsp"
 	"gdx/rpc"
+	"gdx/version"
 )
 
 func getLogger(filename string) *log.Logger {
@@ -54,11 +55,11 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 }
 
 func main() {
-	version := flag.Bool("version", false, "Prints the version")
+	v := flag.Bool("version", false, "Prints the version")
 	flag.Parse()
 
-	if *version {
-		fmt.Printf("GDX version: %s\n", lsp.ServerVersion)
+	if *v {
+		fmt.Printf("GDX version: %s\n", version.Version)
 		return
 	}
 
