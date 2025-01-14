@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -43,6 +44,8 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 			return lsp.HandleTextDocumentOpen(content, logger, state)
 		case "textDocument/didChange":
 			return lsp.HandleTextDocumentChange(content, logger, state)
+		case "textDocument/completion":
+			return lsp.HandleCompletion(content, logger)
 
 		}
 
@@ -51,6 +54,14 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 }
 
 func main() {
+	version := flag.Bool("version", false, "Prints the version")
+	flag.Parse()
+
+	if *version {
+		fmt.Printf("GDX version: %s\n", lsp.ServerVersion)
+		return
+	}
+
 	state := lsp.ServerState{
 		Files: make(map[string]string),
 	}
