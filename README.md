@@ -1,5 +1,4 @@
 # gdx
-![GitHub Release](https://img.shields.io/github/v/release/grqphical/gdx?include_prereleases)
 
 A language server for Godot/GDScript written in Golang.
 
