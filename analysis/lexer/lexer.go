@@ -93,6 +93,12 @@ func makeNumber(line string, colNumber *int, lineNumber int) (Token, error) {
 		} else if unicode.IsDigit(char) {
 			numberString += string(char)
 		} else {
+			// return an error if there is an invalid characeter after a dot such as 1.a or 24.!
+			if line[*colNumber+i-1] == '.' {
+				return Token{}, NewSyntaxError(lineNumber, *colNumber+i, "invalid float literal")
+
+			}
+
 			break
 		}
 	}
@@ -122,8 +128,10 @@ func ScanSource(source string) ([]Token, error) {
 			// line/rest of line is a comment so ignore the rest of it
 			case '#':
 				break charLoop
+				// ignore whitespace
 			case ' ', '\t', '\x00':
 				break
+				// number literals
 			case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 				fmt.Printf("character: %c\n", char)
 				token, err := makeNumber(line, &colNumber, lineNumber)

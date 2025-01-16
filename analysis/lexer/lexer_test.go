@@ -29,4 +29,13 @@ func TestScanSource(t *testing.T) {
 	tokens, err = lexer.ScanSource(testSource)
 	assert.NoError(t, err)
 	assert.ElementsMatch(t, expected, tokens, "tokens should match")
+
+	// test error handling
+	testSource = "INVALID"
+	tokens, err = lexer.ScanSource(testSource)
+	assert.Error(t, err)
+
+	testSource = "0.a"
+	tokens, err = lexer.ScanSource(testSource)
+	assert.Error(t, err)
 }
