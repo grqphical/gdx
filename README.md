@@ -29,7 +29,7 @@ local client = vim.lsp.start_client({
 })
 
 vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "*.gd" },
+        pattern = { "gdscript" },
         callback = function()
                 vim.lsp.buf_attach_client(0, client)
         end,
