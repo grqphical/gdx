@@ -68,21 +68,21 @@ type CompletionResponse struct {
 }
 
 type CompletionItem struct {
-	Label      string             `json:"label"`
-	Kind       CompletionItemKind `json:"kind"`
-	Detail     string             `json:"detail"`
-	InsertText string             `json:"insertText"`
+	Label         string             `json:"label"`
+	Kind          CompletionItemKind `json:"kind"`
+	Detail        string             `json:"detail"`
+	Documentation string             `json:"documentation"`
 }
 
 func generateCompletionItems(keywords []string) []CompletionItem {
-	result := make([]CompletionItem, len(keywords))
+	result := make([]CompletionItem, 0)
 
 	for _, keyword := range keywords {
 		result = append(result, CompletionItem{
-			Label:      keyword,
-			Kind:       Keyword,
-			Detail:     "a language keyword",
-			InsertText: keyword,
+			Label:         keyword,
+			Kind:          Keyword,
+			Detail:        "a language keyword",
+			Documentation: "a language keyword",
 		})
 	}
 
@@ -110,6 +110,7 @@ func HandleCompletion(content []byte, logger *log.Logger) error {
 		return err
 	}
 
+	logger.Print(encodedResponse)
 	fmt.Print(encodedResponse)
 
 	return nil
