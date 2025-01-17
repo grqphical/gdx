@@ -2,8 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"strings"
-	"unicode"
 )
 
 type TokenType = int
@@ -50,104 +48,164 @@ const (
 	TokenTAU
 	TokenINF
 	TokenNAN
+
+	// Single Character Tokens
+	TokenLParen
+	TokenRParen
+	TokenLBracket
+	TokenRBracket
+	TokenPeriod
+	TokenTilda
+	TokenDash
+	TokenPlus
+	TokenEquals
+	TokenBang
+	TokenSlash
+	TokenStar
+	TokenPercent
+	TokenAmpersand
+	TokenOr
+	TokenComma
+	TokenGreater
+	TokenLess
+	TokenXOR
+
+	// Two-Character Operators
+	TokenEqualsEquals
+	TokenNotEqual
+	TokenGreaterOrEqual
+	TokenLessOrEqual
+	TokenShiftRight
+	TokenShiftLeft
+	TokenBooleanAnd
+	TokenBooleanOr
+	TokenPlusEqual
+	TokenMinusEqual
+	TokenTimesEqual
+	TokenDivideEqual
+	TokenPowerEqual
+	TokenModEqual
+	TokenAndEqual
+	TokenOrEqual
+	TokenXorEqual
+	TokenRShiftEqual
+	TokenLShiftEqual
+
+	TokenEOF
 )
 
-type SyntaxError struct {
+type LexicalError struct {
 	Line    int
 	Column  int
 	Message string
 }
 
-func NewSyntaxError(line int, col int, message string) SyntaxError {
-	return SyntaxError{
+func NewLexicalError(line int, message string) *LexicalError {
+	return &LexicalError{
 		Line:    line,
-		Column:  col,
 		Message: message,
 	}
 }
 
-func (s SyntaxError) Error() string {
-	return fmt.Sprintf("syntax error on line %d, column %d: %s", s.Line+1, s.Column+1, s.Message)
+func (s LexicalError) Error() string {
+	return fmt.Sprintf("lexical error at line %d: %s", s.Line, s.Message)
 }
 
 type Token struct {
 	Type  TokenType
 	Value string
+	Line  int
 }
 
-func makeNumber(line string, colNumber *int, lineNumber int) (Token, error) {
-	dotCount := 0
-	numberString := ""
-
-	for i := 0; *colNumber+i < len(line); i++ {
-		char := rune(line[*colNumber+i])
-
-		if char == '.' {
-			// Can't have more than one dot in a float literal
-			if dotCount == 1 {
-				return Token{}, NewSyntaxError(lineNumber, *colNumber+i, "invalid float literal")
-			}
-
-			dotCount++
-			numberString += string(char)
-		} else if unicode.IsDigit(char) {
-			numberString += string(char)
-		} else {
-			// return an error if there is an invalid characeter after a dot such as 1.a or 24.!
-			if line[*colNumber+i-1] == '.' {
-				return Token{}, NewSyntaxError(lineNumber, *colNumber+i, "invalid float literal")
-
-			}
-
-			break
-		}
-	}
-
-	*colNumber += len(numberString)
-
-	return Token{
-		Type:  TypeNumber,
-		Value: numberString,
-	}, nil
+type Scanner struct {
+	source  string
+	start   int
+	current int
+	line    int
+	tokens  []Token
 }
 
-func ScanSource(source string) ([]Token, error) {
-	var tokens []Token = make([]Token, 0)
+func NewScanner(source string) *Scanner {
+	return &Scanner{
+		source:  source,
+		start:   0,
+		current: 0,
+		line:    1,
+		tokens:  make([]Token, 0),
+	}
+}
 
-	lines := strings.Split(source, "\n")
+func (s *Scanner) isAtEnd() bool {
+	return s.current >= len(s.source)
+}
 
-	for lineNumber, line := range lines {
-		colNumber := 0
-		var char rune
+func (s *Scanner) advance() rune {
+	char := rune(s.source[s.current])
+	s.current += 1
 
-	charLoop:
-		for colNumber < len(line) {
-			char = rune(line[colNumber])
+	return char
+}
 
-			switch char {
-			// line/rest of line is a comment so ignore the rest of it
-			case '#':
-				break charLoop
-				// ignore whitespace
-			case ' ', '\t', '\x00':
-				break
-				// number literals
-			case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-				fmt.Printf("character: %c\n", char)
-				token, err := makeNumber(line, &colNumber, lineNumber)
-				if err != nil {
-					return nil, err
-				}
+func (s *Scanner) addToken(tokenType TokenType) {
+	text := s.source[s.start : s.current+1]
 
-				tokens = append(tokens, token)
+	s.tokens = append(s.tokens, Token{
+		Type:  tokenType,
+		Value: text,
+		Line:  s.line,
+	})
+}
 
-				break
-			default:
-				return nil, NewSyntaxError(lineNumber, colNumber, fmt.Sprintf("unknown token %q", char))
-			}
-			colNumber += 1
+func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
+	c := s.advance()
+
+	for !s.isAtEnd() {
+		s.start = s.current
+
+		switch c {
+		case '(':
+			s.addToken(TokenLParen)
+		case ')':
+			s.addToken(TokenRParen)
+		case '[':
+			s.addToken(TokenLBracket)
+		case ']':
+			s.addToken(TokenRBracket)
+		case '.':
+			s.addToken(TokenPeriod)
+		case '~':
+			s.addToken(TokenTilda)
+		case '-':
+			s.addToken(TokenDash)
+		case '+':
+			s.addToken(TokenPlus)
+		case '=':
+			s.addToken(TokenEquals)
+		case '!':
+			s.addToken(TokenBang)
+		case '/':
+			s.addToken(TokenSlash)
+		case '*':
+			s.addToken(TokenStar)
+		case '%':
+			s.addToken(TokenPercent)
+		case '&':
+			s.addToken(TokenAmpersand)
+		case '|':
+			s.addToken(TokenOr)
+		case ',':
+			s.addToken(TokenComma)
+		case '>':
+			s.addToken(TokenGreater)
+		case '<':
+			s.addToken(TokenLess)
+		case '^':
+			s.addToken(TokenXOR)
+		default:
+			// Handle unsupported characters if needed
 		}
+
 	}
 
-	return tokens, nil
+	return s.tokens, nil
 }
