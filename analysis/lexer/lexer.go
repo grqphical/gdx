@@ -90,6 +90,7 @@ const (
 	TokenXorEqual
 	TokenRShiftEqual
 	TokenLShiftEqual
+	TokenPower
 
 	TokenEOF
 )
@@ -135,10 +136,12 @@ func NewScanner(source string) *Scanner {
 	}
 }
 
+// check if we are at the end of the source
 func (s *Scanner) isAtEnd() bool {
 	return s.current >= len(s.source)
 }
 
+// advance the scanner
 func (s *Scanner) advance() rune {
 	char := rune(s.source[s.current])
 	s.current += 1
@@ -146,6 +149,7 @@ func (s *Scanner) advance() rune {
 	return char
 }
 
+// add a token to the list of scanned tokens
 func (s *Scanner) addToken(tokenType TokenType) {
 	text := s.source[s.start : s.current+1]
 
@@ -154,6 +158,20 @@ func (s *Scanner) addToken(tokenType TokenType) {
 		Value: text,
 		Line:  s.line,
 	})
+}
+
+// check is the next character equals the given character
+// and advances the scanner by one token if so
+func (s *Scanner) match(expected rune) bool {
+	if s.isAtEnd() {
+		return false
+	}
+	if rune(s.source[s.current]) != expected {
+		return false
+	}
+
+	s.current += 1
+	return true
 }
 
 func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
@@ -176,17 +194,43 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 		case '~':
 			s.addToken(TokenTilda)
 		case '-':
-			s.addToken(TokenDash)
+			if s.match('=') {
+				s.addToken(TokenMinusEqual)
+			} else {
+				s.addToken(TokenDash)
+			}
 		case '+':
-			s.addToken(TokenPlus)
+			if s.match('=') {
+				s.addToken(TokenPlusEqual)
+			} else {
+				s.addToken(TokenPlus)
+			}
 		case '=':
-			s.addToken(TokenEquals)
+			if s.match('=') {
+				s.addToken(TokenEqualsEquals)
+			} else {
+				s.addToken(TokenEquals)
+			}
 		case '!':
-			s.addToken(TokenBang)
+			if s.match('=') {
+				s.addToken(TokenNotEqual)
+			} else {
+				s.addToken(TokenBang)
+			}
 		case '/':
-			s.addToken(TokenSlash)
+			if s.match('=') {
+				s.addToken(TokenDivideEqual)
+			} else {
+				s.addToken(TokenSlash)
+			}
 		case '*':
-			s.addToken(TokenStar)
+			if s.match('*') {
+				s.addToken(TokenPower)
+			} else if s.match('=') {
+				s.addToken(TokenTimesEqual)
+			} else {
+				s.addToken(TokenStar)
+			}
 		case '%':
 			s.addToken(TokenPercent)
 		case '&':
@@ -196,13 +240,21 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 		case ',':
 			s.addToken(TokenComma)
 		case '>':
-			s.addToken(TokenGreater)
+			if s.match('=') {
+				s.addToken(TokenGreaterOrEqual)
+			} else {
+				s.addToken(TokenGreater)
+			}
 		case '<':
-			s.addToken(TokenLess)
+			if s.match('=') {
+				s.addToken(TokenLessOrEqual)
+			} else {
+				s.addToken(TokenLess)
+			}
 		case '^':
 			s.addToken(TokenXOR)
 		default:
-			// Handle unsupported characters if needed
+			return nil, NewLexicalError(s.line, fmt.Sprintf("unknown character %q", c))
 		}
 
 	}
