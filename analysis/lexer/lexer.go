@@ -151,7 +151,7 @@ func (s *Scanner) advance() rune {
 
 // add a token to the list of scanned tokens
 func (s *Scanner) addToken(tokenType TokenType) {
-	text := s.source[s.start : s.current+1]
+	text := s.source[s.start:s.current]
 
 	s.tokens = append(s.tokens, Token{
 		Type:  tokenType,
@@ -174,11 +174,17 @@ func (s *Scanner) match(expected rune) bool {
 	return true
 }
 
-func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
-	c := s.advance()
+func (s *Scanner) peek() rune {
+	if s.isAtEnd() {
+		return '\x00'
+	}
+	return rune(s.source[s.current])
+}
 
+func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 	for !s.isAtEnd() {
 		s.start = s.current
+		c := s.advance()
 
 		switch c {
 		case '(':
@@ -225,36 +231,75 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 			}
 		case '*':
 			if s.match('*') {
-				s.addToken(TokenPower)
+				if s.match('=') {
+					s.addToken(TokenPowerEqual)
+				} else {
+					s.addToken(TokenPower)
+				}
 			} else if s.match('=') {
 				s.addToken(TokenTimesEqual)
 			} else {
 				s.addToken(TokenStar)
 			}
 		case '%':
-			s.addToken(TokenPercent)
+			if s.match('=') {
+				s.addToken(TokenModEqual)
+			} else {
+				s.addToken(TokenPercent)
+			}
 		case '&':
-			s.addToken(TokenAmpersand)
+			if s.match('&') {
+				s.addToken(TokenBooleanAnd)
+			} else {
+				s.addToken(TokenAmpersand)
+			}
 		case '|':
-			s.addToken(TokenOr)
+			if s.match('|') {
+				s.addToken(TokenBooleanOr)
+			} else if s.match('=') {
+				s.addToken(TokenOrEqual)
+			} else {
+				s.addToken(TokenOr)
+			}
 		case ',':
 			s.addToken(TokenComma)
 		case '>':
 			if s.match('=') {
 				s.addToken(TokenGreaterOrEqual)
+			} else if s.match('>') {
+				if s.match('=') {
+					s.addToken(TokenRShiftEqual)
+				} else {
+					s.addToken(TokenShiftRight)
+				}
 			} else {
 				s.addToken(TokenGreater)
 			}
 		case '<':
 			if s.match('=') {
 				s.addToken(TokenLessOrEqual)
+			} else if s.match('<') {
+				if s.match('=') {
+					s.addToken(TokenLShiftEqual)
+				} else {
+					s.addToken(TokenShiftLeft)
+				}
 			} else {
 				s.addToken(TokenLess)
 			}
 		case '^':
-			s.addToken(TokenXOR)
+			if s.match('=') {
+				s.addToken(TokenXorEqual)
+			} else {
+				s.addToken(TokenXOR)
+			}
+		case ' ', '\t', '\r':
+			break
+		case '\n':
+			s.line += 1
+			break
 		default:
-			return nil, NewLexicalError(s.line, fmt.Sprintf("unknown character %q", c))
+			return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
 		}
 
 	}

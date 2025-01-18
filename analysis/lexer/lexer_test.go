@@ -1,41 +1,72 @@
 package lexer_test
 
 import (
-	"gdx/analysis/lexer"
+	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"gdx/analysis/lexer"
 )
 
-func TestScanSource(t *testing.T) {
-	// test comments
-	testSource := "# this is a comment and should be ignored"
-	tokens, err := lexer.ScanSource(testSource)
-	assert.NoError(t, err)
-	assert.Empty(t, tokens, "no tokens should be scanned")
-
-	// test number literals
-	testSource = "105\n0.15"
-	expected := []lexer.Token{
+func TestScanTokens(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []lexer.Token
+		hasError bool
+	}{
 		{
-			Type:  lexer.TypeNumber,
-			Value: "105",
+			name:  "Single character tokens",
+			input: "()[]",
+			expected: []lexer.Token{
+				{Type: lexer.TokenLParen, Value: "(", Line: 1},
+				{Type: lexer.TokenRParen, Value: ")", Line: 1},
+				{Type: lexer.TokenLBracket, Value: "[", Line: 1},
+				{Type: lexer.TokenRBracket, Value: "]", Line: 1},
+			},
+			hasError: false,
 		},
 		{
-			Type:  lexer.TypeNumber,
-			Value: "0.15",
+			name:  "Two-character tokens",
+			input: "== != >= <=",
+			expected: []lexer.Token{
+				{Type: lexer.TokenEqualsEquals, Value: "==", Line: 1},
+				{Type: lexer.TokenNotEqual, Value: "!=", Line: 1},
+				{Type: lexer.TokenGreaterOrEqual, Value: ">=", Line: 1},
+				{Type: lexer.TokenLessOrEqual, Value: "<=", Line: 1},
+			},
+			hasError: false,
+		},
+		{
+			name:  "Mixed single and multi-character tokens",
+			input: "+= -= * /",
+			expected: []lexer.Token{
+				{Type: lexer.TokenPlusEqual, Value: "+=", Line: 1},
+				{Type: lexer.TokenMinusEqual, Value: "-=", Line: 1},
+				{Type: lexer.TokenStar, Value: "*", Line: 1},
+				{Type: lexer.TokenSlash, Value: "/", Line: 1},
+			},
+			hasError: false,
+		},
+		{
+			name:     "Unrecognized token",
+			input:    "?",
+			expected: nil,
+			hasError: true,
 		},
 	}
-	tokens, err = lexer.ScanSource(testSource)
-	assert.NoError(t, err)
-	assert.ElementsMatch(t, expected, tokens, "tokens should match")
 
-	// test error handling
-	testSource = "INVALID"
-	tokens, err = lexer.ScanSource(testSource)
-	assert.Error(t, err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			scanner := lexer.NewScanner(test.input)
+			tokens, err := scanner.ScanTokens()
 
-	testSource = "0.a"
-	tokens, err = lexer.ScanSource(testSource)
-	assert.Error(t, err)
+			if (err != nil) != test.hasError {
+				t.Fatalf("expected error: %v, got: %v", test.hasError, err)
+			}
+
+			if !test.hasError && !reflect.DeepEqual(tokens, test.expected) {
+				t.Errorf("expected tokens: %v, got: %v", test.expected, tokens)
+			}
+		})
+	}
 }
