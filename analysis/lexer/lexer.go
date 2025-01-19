@@ -97,6 +97,48 @@ const (
 	TokenEOF
 )
 
+var GDScriptKeywords = map[string]TokenType{
+	"if":         TokenIf,
+	"elif":       TokenElif,
+	"else":       TokenElse,
+	"for":        TokenFor,
+	"while":      TokenWhile,
+	"match":      TokenMatch,
+	"when":       TokenWhen,
+	"break":      TokenBreak,
+	"continue":   TokenContinue,
+	"pass":       TokenPass,
+	"return":     TokenReturn,
+	"class":      TokenClass,
+	"class_name": TokenClassName,
+	"extends":    TokenExtends,
+	"is":         TokenIs,
+	"in":         TokenIn,
+	"as":         TokenAs,
+	"self":       TokenSelf,
+	"super":      TokenSuper,
+	"signal":     TokenSignal,
+	"func":       TokenFunc,
+	"static":     TokenStatic,
+	"const":      TokenConst,
+	"enum":       TokenEnum,
+	"var":        TokenVar,
+	"breakpoint": TokenBreakpoint,
+	"preload":    TokenPreload,
+	"await":      TokenAwait,
+	"yield":      TokenYield,
+	"assert":     TokenAssert,
+	"void":       TokenVoid,
+	"PI":         TokenPI,
+	"TAU":        TokenTAU,
+	"INF":        TokenINF,
+	"NAN":        TokenNAN,
+}
+
+func isAlphaNumeric(c rune) bool {
+	return unicode.IsDigit(c) || unicode.IsLetter(c)
+}
+
 type LexicalError struct {
 	Line    int
 	Column  int
@@ -398,6 +440,18 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 				value = strings.ReplaceAll(value, "_", "")
 
 				s.addTokenWithValue(TokenNumber, value)
+			} else if unicode.IsLetter(c) {
+				for isAlphaNumeric(s.peek()) {
+					s.advance()
+				}
+
+				text := s.source[s.start:s.current]
+				tokenType, exists := GDScriptKeywords[text]
+				if !exists {
+					tokenType = TokenIdentifier
+				}
+
+				s.addToken(tokenType)
 			} else {
 				return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
 			}

@@ -72,6 +72,16 @@ func TestScanTokens(t *testing.T) {
 				{Type: lexer.TokenNumber, Value: "3500000", Line: 1},
 			},
 		},
+		{
+			name:  "Keywords and Identifer",
+			input: "break if yield foobar",
+			expected: []lexer.Token{
+				{Type: lexer.TokenBreak, Value: "break", Line: 1},
+				{Type: lexer.TokenIf, Value: "if", Line: 1},
+				{Type: lexer.TokenYield, Value: "yield", Line: 1},
+				{Type: lexer.TokenIdentifier, Value: "foobar", Line: 1},
+			},
+		},
 	}
 
 	for _, test := range tests {
