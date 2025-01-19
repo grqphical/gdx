@@ -8,9 +8,9 @@ type TokenType = int
 
 const (
 	// Literals
-	TypeIdentifier TokenType = iota
-	TypeString
-	TypeNumber
+	TokenIdentifier TokenType = iota
+	TokenString
+	TokenNumber
 
 	// Keywords
 	TokenIf
@@ -160,6 +160,15 @@ func (s *Scanner) addToken(tokenType TokenType) {
 	})
 }
 
+func (s *Scanner) addTokenWithValue(tokenType TokenType, value string) {
+	s.tokens = append(s.tokens, Token{
+		Type:  tokenType,
+		Value: value,
+		Line:  s.line,
+	})
+
+}
+
 // check is the next character equals the given character
 // and advances the scanner by one token if so
 func (s *Scanner) match(expected rune) bool {
@@ -223,6 +232,7 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 			} else {
 				s.addToken(TokenBang)
 			}
+
 		case '/':
 			if s.match('=') {
 				s.addToken(TokenDivideEqual)
@@ -298,6 +308,66 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 		case '\n':
 			s.line += 1
 			break
+
+		// comments
+		case '#':
+			for s.peek() != '\n' {
+				s.advance()
+			}
+			break
+		// string literals
+		case '"', '\'':
+			if s.current+2 < len(s.source) && // Check if we have enough characters ahead
+				rune(s.source[s.current]) == c &&
+				rune(s.source[s.current+1]) == c { // Check for triple-quoted strings
+				// Advance past the opening quotes
+				s.advance()
+				s.advance()
+
+				for {
+					if s.isAtEnd() {
+						return nil, NewLexicalError(s.line, "unterminated triple-quoted string")
+					}
+
+					// Check for closing triple quotes
+					if s.current+2 < len(s.source) &&
+						rune(s.source[s.current]) == c &&
+						rune(s.source[s.current+1]) == c &&
+						rune(s.source[s.current+2]) == c {
+						// Advance past the closing quotes
+						s.advance()
+						s.advance()
+						s.advance()
+						break
+					}
+
+					if s.peek() == '\n' {
+						s.line++ // Track line numbers for multiline strings
+					}
+					s.advance()
+				}
+
+				// Extract the value inside the triple quotes
+				value := s.source[s.start+3 : s.current-3]
+				s.addTokenWithValue(TokenString, value)
+			} else { // Handle single-quoted strings as usual
+				for s.peek() != c && !s.isAtEnd() {
+					if s.peek() == '\n' {
+						return nil, NewLexicalError(s.line, "unterminated string due to newline")
+					}
+					s.advance()
+				}
+
+				if s.isAtEnd() {
+					return nil, NewLexicalError(s.line, "unterminated string")
+				}
+
+				// Advance for the closing quote
+				s.advance()
+
+				value := s.source[s.start+1 : s.current-1]
+				s.addTokenWithValue(TokenString, value)
+			}
 		default:
 			return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
 		}

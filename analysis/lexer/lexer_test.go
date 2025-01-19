@@ -53,6 +53,16 @@ func TestScanTokens(t *testing.T) {
 			expected: nil,
 			hasError: true,
 		},
+		{
+			name:  "Strings",
+			input: `"foobar" 'foobar' """foobar""" '''foobar'''`,
+			expected: []lexer.Token{
+				{Type: lexer.TokenString, Value: "foobar", Line: 1},
+				{Type: lexer.TokenString, Value: "foobar", Line: 1},
+				{Type: lexer.TokenString, Value: "foobar", Line: 1},
+				{Type: lexer.TokenString, Value: "foobar", Line: 1},
+			},
+		},
 	}
 
 	for _, test := range tests {
