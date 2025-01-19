@@ -63,6 +63,15 @@ func TestScanTokens(t *testing.T) {
 				{Type: lexer.TokenString, Value: "foobar", Line: 1},
 			},
 		},
+		{
+			name:  "numbers",
+			input: `340 3.14 3_500_000`,
+			expected: []lexer.Token{
+				{Type: lexer.TokenNumber, Value: "340", Line: 1},
+				{Type: lexer.TokenNumber, Value: "3.14", Line: 1},
+				{Type: lexer.TokenNumber, Value: "3500000", Line: 1},
+			},
+		},
 	}
 
 	for _, test := range tests {

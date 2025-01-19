@@ -2,6 +2,8 @@ package lexer
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 )
 
 type TokenType = int
@@ -183,11 +185,20 @@ func (s *Scanner) match(expected rune) bool {
 	return true
 }
 
+// peeks at the next character
 func (s *Scanner) peek() rune {
 	if s.isAtEnd() {
 		return '\x00'
 	}
 	return rune(s.source[s.current])
+}
+
+// peeks at the next next character (two characters ahead)
+func (s *Scanner) peekNext() rune {
+	if s.current+1 >= len(s.source) {
+		return '\x00'
+	}
+	return rune(s.source[s.current+1])
 }
 
 func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
@@ -369,7 +380,27 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 				s.addTokenWithValue(TokenString, value)
 			}
 		default:
-			return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
+			if unicode.IsDigit(c) {
+				// lex a number token
+				for unicode.IsDigit(s.peek()) || s.peek() == '_' {
+					s.advance()
+				}
+
+				if s.peek() == '.' && (unicode.IsDigit(s.peekNext()) || s.peekNext() == '_') {
+					s.advance()
+
+					for unicode.IsDigit(s.peek()) || s.peek() == '_' {
+						s.advance()
+					}
+				}
+
+				value := s.source[s.start:s.current]
+				value = strings.ReplaceAll(value, "_", "")
+
+				s.addTokenWithValue(TokenNumber, value)
+			} else {
+				return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
+			}
 		}
 
 	}
