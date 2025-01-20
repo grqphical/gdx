@@ -13,6 +13,7 @@ const (
 	TokenIdentifier TokenType = iota
 	TokenString
 	TokenNumber
+	TokenRawString
 
 	// Keywords
 	TokenIf
@@ -243,6 +244,61 @@ func (s *Scanner) peekNext() rune {
 	return rune(s.source[s.current+1])
 }
 
+func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
+	if s.current+2 < len(s.source) && // Check if we have enough characters ahead
+		rune(s.source[s.current]) == c &&
+		rune(s.source[s.current+1]) == c { // Check for triple-quoted strings
+		// Advance past the opening quotes
+		s.advance()
+		s.advance()
+
+		for {
+			if s.isAtEnd() {
+				return NewLexicalError(s.line, "unterminated triple-quoted string")
+			}
+
+			// Check for closing triple quotes
+			if s.current+2 < len(s.source) &&
+				rune(s.source[s.current]) == c &&
+				rune(s.source[s.current+1]) == c &&
+				rune(s.source[s.current+2]) == c {
+				// Advance past the closing quotes
+				s.advance()
+				s.advance()
+				s.advance()
+				break
+			}
+
+			if s.peek() == '\n' {
+				s.line++ // Track line numbers for multiline strings
+			}
+			s.advance()
+		}
+
+		// Extract the value inside the triple quotes
+		value := s.source[s.start+3 : s.current-3]
+		s.addTokenWithValue(t, value)
+	} else { // Handle single-quoted strings as usual
+		for s.peek() != c && !s.isAtEnd() {
+			if s.peek() == '\n' {
+				return NewLexicalError(s.line, "unterminated string due to newline")
+			}
+			s.advance()
+		}
+
+		if s.isAtEnd() {
+			return NewLexicalError(s.line, "unterminated string")
+		}
+
+		// Advance for the closing quote
+		s.advance()
+
+		value := s.source[s.start+1 : s.current-1]
+		s.addTokenWithValue(t, value)
+	}
+	return nil
+}
+
 func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 	for !s.isAtEnd() {
 		s.start = s.current
@@ -313,11 +369,28 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 		case '&':
 			if s.match('&') {
 				s.addToken(TokenBooleanAnd)
+			} else if s.match('"') || s.match('\'') {
+				// StringName
+				quote := s.peek()
+				s.advance()
+
+				// Set start to exclude the 'r' prefix and opening quote
+				s.start += 1
+
+				// Parse the raw string
+				err := s.makeString(quote, TokenRawString)
+				if err != nil {
+					return nil, err
+				}
 			} else {
 				s.addToken(TokenAmpersand)
 			}
 		case '|':
 			if s.match('|') {
+				if s.peek() != '"' || s.peek() != '\'' {
+					break
+				}
+
 				s.addToken(TokenBooleanOr)
 			} else if s.match('=') {
 				s.addToken(TokenOrEqual)
@@ -370,57 +443,26 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 			break
 		// string literals
 		case '"', '\'':
-			if s.current+2 < len(s.source) && // Check if we have enough characters ahead
-				rune(s.source[s.current]) == c &&
-				rune(s.source[s.current+1]) == c { // Check for triple-quoted strings
-				// Advance past the opening quotes
-				s.advance()
-				s.advance()
-
-				for {
-					if s.isAtEnd() {
-						return nil, NewLexicalError(s.line, "unterminated triple-quoted string")
-					}
-
-					// Check for closing triple quotes
-					if s.current+2 < len(s.source) &&
-						rune(s.source[s.current]) == c &&
-						rune(s.source[s.current+1]) == c &&
-						rune(s.source[s.current+2]) == c {
-						// Advance past the closing quotes
-						s.advance()
-						s.advance()
-						s.advance()
-						break
-					}
-
-					if s.peek() == '\n' {
-						s.line++ // Track line numbers for multiline strings
-					}
-					s.advance()
-				}
-
-				// Extract the value inside the triple quotes
-				value := s.source[s.start+3 : s.current-3]
-				s.addTokenWithValue(TokenString, value)
-			} else { // Handle single-quoted strings as usual
-				for s.peek() != c && !s.isAtEnd() {
-					if s.peek() == '\n' {
-						return nil, NewLexicalError(s.line, "unterminated string due to newline")
-					}
-					s.advance()
-				}
-
-				if s.isAtEnd() {
-					return nil, NewLexicalError(s.line, "unterminated string")
-				}
-
-				// Advance for the closing quote
-				s.advance()
-
-				value := s.source[s.start+1 : s.current-1]
-				s.addTokenWithValue(TokenString, value)
+			s.makeString(c, TokenString)
+		// raw strings
+		case 'r':
+			// If the next character isn't a quote, treat 'r' as the start of an identifier
+			if s.peek() != '"' && s.peek() != '\'' {
+				continue //
 			}
+
+			quote := s.peek()
+			s.advance()
+
+			// Set start to exclude the 'r' prefix and opening quote
+			s.start += 1
+
+			// Parse the raw string
+			err := s.makeString(quote, TokenRawString)
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			if unicode.IsDigit(c) {
 				// lex a number token

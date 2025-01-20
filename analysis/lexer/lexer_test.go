@@ -55,12 +55,14 @@ func TestScanTokens(t *testing.T) {
 		},
 		{
 			name:  "Strings",
-			input: `"foobar" 'foobar' """foobar""" '''foobar'''`,
+			input: `"foobar" 'foobar' """foobar""" '''foobar''' r"foobar" r"""foobar"""`,
 			expected: []lexer.Token{
 				{Type: lexer.TokenString, Value: "foobar", Line: 1},
 				{Type: lexer.TokenString, Value: "foobar", Line: 1},
 				{Type: lexer.TokenString, Value: "foobar", Line: 1},
 				{Type: lexer.TokenString, Value: "foobar", Line: 1},
+				{Type: lexer.TokenRawString, Value: "foobar", Line: 1},
+				{Type: lexer.TokenRawString, Value: "foobar", Line: 1},
 			},
 		},
 		{
