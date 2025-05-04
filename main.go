@@ -64,7 +64,7 @@ func main() {
 	}
 
 	state := lsp.ServerState{
-		Files: make(map[string]string),
+		Files: make(map[string]lsp.FileState),
 	}
 	logger := getLogger("/home/grqphical/dev/go/gdx/log.txt")
 

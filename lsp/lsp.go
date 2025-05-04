@@ -2,9 +2,13 @@ package lsp
 
 const ServerName string = "gdx"
 
+type FileState struct {
+	Contents []string
+}
+
 type ServerState struct {
 	Shutdown bool
-	Files    map[string]string
+	Files    map[string]FileState
 }
 
 type RequestMessage struct {
