@@ -66,7 +66,7 @@ func main() {
 	state := lsp.ServerState{
 		Files: make(map[string]string),
 	}
-	logger := getLogger("/home/grqphical/development/go/gdx/log.txt")
+	logger := getLogger("/home/grqphical/dev/go/gdx/log.txt")
 
 	logger.Println("starting GDX")
 

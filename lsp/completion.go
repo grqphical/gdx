@@ -110,7 +110,6 @@ func HandleCompletion(content []byte, logger *log.Logger) error {
 		return err
 	}
 
-	logger.Print(encodedResponse)
 	fmt.Print(encodedResponse)
 
 	return nil
