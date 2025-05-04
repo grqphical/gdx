@@ -257,7 +257,7 @@ func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
 
 		for {
 			if s.isAtEnd() {
-				return NewLexicalError(s.line, s.start, s.current, "unterminated triple-quoted string")
+				return NewLexicalError(s.line, s.start, s.current, "unterminated string")
 			}
 
 			// Check for closing triple quotes
@@ -284,7 +284,7 @@ func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
 	} else { // Handle single-quoted strings as usual
 		for s.peek() != c && !s.isAtEnd() {
 			if s.peek() == '\n' {
-				return NewLexicalError(s.line, s.start, s.current, "unterminated string due to newline")
+				return NewLexicalError(s.line, s.start, s.current, "unterminated string")
 			}
 			s.advance()
 		}
