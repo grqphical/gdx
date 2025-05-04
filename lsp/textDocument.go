@@ -3,7 +3,6 @@ package lsp
 import (
 	"encoding/json"
 	"log"
-	"strings"
 )
 
 type TextDocumentItem struct {
@@ -49,8 +48,11 @@ func HandleTextDocumentOpen(contents []byte, logger *log.Logger, state *ServerSt
 
 	logger.Printf("recieved textDocument/open for %s\n", msg.Params.TextDocument.URI)
 
-	state.Files[msg.Params.TextDocument.URI] = FileState{
-		Contents: strings.Split(msg.Params.TextDocument.Text, "\n"),
+	state.Files[msg.Params.TextDocument.URI] = msg.Params.TextDocument.Text
+
+	err := RunDiagnostics(state, logger, msg.Params.TextDocument.URI)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -65,8 +67,11 @@ func HandleTextDocumentChange(contents []byte, logger *log.Logger, state *Server
 
 	logger.Printf("document %s changed", msg.Params.TextDocument.URI)
 
-	state.Files[msg.Params.TextDocument.URI] = FileState{
-		Contents: strings.Split(msg.Params.ContentChanges[0].Text, "\n"),
+	state.Files[msg.Params.TextDocument.URI] = msg.Params.ContentChanges[0].Text
+
+	err := RunDiagnostics(state, logger, msg.Params.TextDocument.URI)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -141,20 +141,23 @@ func isAlphaNumeric(c rune) bool {
 }
 
 type LexicalError struct {
-	Line    int
-	Column  int
-	Message string
+	Line      int
+	StartChar int
+	EndChar   int
+	Message   string
 }
 
-func NewLexicalError(line int, message string) *LexicalError {
+func NewLexicalError(line int, startChar int, endChar int, message string) *LexicalError {
 	return &LexicalError{
-		Line:    line,
-		Message: message,
+		Line:      line,
+		StartChar: startChar,
+		EndChar:   endChar,
+		Message:   message,
 	}
 }
 
 func (s LexicalError) Error() string {
-	return fmt.Sprintf("lexical error at line %d: %s", s.Line, s.Message)
+	return fmt.Sprintf("lexical error at line %d, char %d: %s", s.Line, s.StartChar, s.Message)
 }
 
 type Token struct {
@@ -254,7 +257,7 @@ func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
 
 		for {
 			if s.isAtEnd() {
-				return NewLexicalError(s.line, "unterminated triple-quoted string")
+				return NewLexicalError(s.line, s.start, s.current, "unterminated triple-quoted string")
 			}
 
 			// Check for closing triple quotes
@@ -281,13 +284,13 @@ func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
 	} else { // Handle single-quoted strings as usual
 		for s.peek() != c && !s.isAtEnd() {
 			if s.peek() == '\n' {
-				return NewLexicalError(s.line, "unterminated string due to newline")
+				return NewLexicalError(s.line, s.start, s.current, "unterminated string due to newline")
 			}
 			s.advance()
 		}
 
 		if s.isAtEnd() {
-			return NewLexicalError(s.line, "unterminated string")
+			return NewLexicalError(s.line, s.start, s.current, "unterminated string")
 		}
 
 		// Advance for the closing quote
@@ -299,7 +302,7 @@ func (s *Scanner) makeString(c rune, t TokenType) *LexicalError {
 	return nil
 }
 
-func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
+func (s *Scanner) ScanTokens() ([]Token, error) {
 	for !s.isAtEnd() {
 		s.start = s.current
 		c := s.advance()
@@ -495,7 +498,7 @@ func (s *Scanner) ScanTokens() ([]Token, *LexicalError) {
 
 				s.addToken(tokenType)
 			} else {
-				return nil, NewLexicalError(s.line, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
+				return nil, NewLexicalError(s.line, s.start, s.current, fmt.Sprintf("unknown token '%s'", s.source[s.start:s.current]))
 			}
 		}
 
