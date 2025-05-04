@@ -66,6 +66,12 @@ func TestScanTokens(t *testing.T) {
 			},
 		},
 		{
+			name:     "Unterminated string",
+			input:    `"foobar`,
+			expected: nil,
+			hasError: true,
+		},
+		{
 			name:  "numbers",
 			input: `340 3.14 3_500_000`,
 			expected: []lexer.Token{

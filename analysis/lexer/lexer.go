@@ -446,7 +446,9 @@ func (s *Scanner) ScanTokens() ([]Token, error) {
 			break
 		// string literals
 		case '"', '\'':
-			s.makeString(c, TokenString)
+			if err := s.makeString(c, TokenString); err != nil {
+				return nil, err
+			}
 		// raw strings
 		case 'r':
 			// If the next character isn't a quote, treat 'r' as the start of an identifier
