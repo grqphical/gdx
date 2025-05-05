@@ -26,6 +26,15 @@ type DidChangeTextDocumentNotification struct {
 	Params DidChangeTextDocumentNotificationParams `json:"params"`
 }
 
+type DidCloseTextDocumentParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type DidCloseTextDocumentNotification struct {
+	Notification
+	Params DidCloseTextDocumentParams `json:"params"`
+}
+
 type TextDocumentContentChangeEvent struct {
 	Text string `json:"text"`
 }
@@ -54,6 +63,20 @@ func HandleTextDocumentOpen(contents []byte, logger *log.Logger, state *ServerSt
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func HandleTextDocumentClose(contents []byte, logger *log.Logger, state *ServerState) error {
+	var msg DidCloseTextDocumentNotification
+
+	if err := json.Unmarshal(contents, &msg); err != nil {
+		return err
+	}
+
+	logger.Printf("document %s closed", msg.Params.TextDocument.URI)
+
+	delete(state.Files, msg.Params.TextDocument.URI)
 
 	return nil
 }

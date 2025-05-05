@@ -22,16 +22,18 @@ Clone this repository and run `go build .`
 
 If you want to use this with Neovim you can add this script to your Neovim config:
 ```lua
+local cwd = vim.fn.getcwd()
+
 local client = vim.lsp.start_client({
-        name = "gdx",
-        cmd = { "PATH_TO_BUILT_GDX_BINARY" },
+    name = "gdx",
+    cmd = { os.getenv("HOME") .. "/dev/go/gdx/gdx", "-workspace", cwd },
 })
 
 vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "gdscript" },
-        callback = function()
-                vim.lsp.buf_attach_client(0, client)
-        end,
+    pattern = { "gdscript" },
+    callback = function()
+        vim.lsp.buf_attach_client(0, client)
+    end,
 })
 ```
 

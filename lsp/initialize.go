@@ -14,10 +14,16 @@ type InitializeRequest struct {
 	Params InitializeRequestParams `json:"params"`
 }
 
+type WorkspaceFolder struct {
+	URI  string `json:"uri"`
+	Name string `json:"name"`
+}
+
 type InitializeRequestParams struct {
 	ClientInfo struct {
-		Name    string `json:"name"`
-		Version string `json:"version,omitempty"`
+		Name             string            `json:"name"`
+		Version          string            `json:"version,omitempty"`
+		WorkspaceFolders []WorkspaceFolder `json:"workspaceFolders,omitempty"`
 	} `json:"clientInfo"`
 }
 

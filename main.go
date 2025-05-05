@@ -45,6 +45,8 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 			return lsp.HandleTextDocumentOpen(content, logger, state)
 		case "textDocument/didChange":
 			return lsp.HandleTextDocumentChange(content, logger, state)
+		case "textDocument/didClose":
+			return lsp.HandleTextDocumentClose(content, logger, state)
 		case "textDocument/completion":
 			return lsp.HandleCompletion(content, logger)
 
@@ -56,19 +58,27 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 
 func main() {
 	v := flag.Bool("version", false, "Prints the version")
+	workspace := flag.String("workspace", "", "Workspace to run analysis on")
+
 	flag.Parse()
+
+	logger := getLogger("/home/grqphical/dev/go/gdx/log.txt")
 
 	if *v {
 		fmt.Printf("GDX version: %s\n", version.Version)
 		return
 	}
 
-	state := lsp.ServerState{
-		Files: make(map[string]string),
+	if workspace == nil {
+		logger.Fatalf("workspace not provided\n")
 	}
-	logger := getLogger("/home/grqphical/dev/go/gdx/log.txt")
 
-	logger.Println("starting GDX")
+	state := lsp.ServerState{
+		Files:         make(map[string]string),
+		WorkspacePath: *workspace,
+	}
+
+	logger.Printf("starting GDX in workspace '%s'\n", *workspace)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
