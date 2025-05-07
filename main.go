@@ -34,7 +34,7 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 	} else {
 		switch method {
 		case "initialize":
-			return lsp.HandleInitialize(content, logger)
+			return lsp.HandleInitialize(content, logger, state)
 		case "shutdown":
 			lsp.HandleShutdown(state, logger)
 			return nil
@@ -58,7 +58,6 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 
 func main() {
 	v := flag.Bool("version", false, "Prints the version")
-	workspace := flag.String("workspace", "", "Workspace to run analysis on")
 
 	flag.Parse()
 
@@ -69,16 +68,9 @@ func main() {
 		return
 	}
 
-	if workspace == nil {
-		logger.Fatalf("workspace not provided\n")
-	}
-
 	state := lsp.ServerState{
-		Files:         make(map[string]string),
-		WorkspacePath: *workspace,
+		Files: make(map[string]string),
 	}
-
-	logger.Printf("starting GDX in workspace '%s'\n", *workspace)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)

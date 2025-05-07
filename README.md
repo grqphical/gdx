@@ -23,19 +23,21 @@ Clone this repository and run `go build .`
 If you want to use this with Neovim you can add this script to your Neovim config:
 ```lua
 local cwd = vim.fn.getcwd()
+local util = require("lspconfig.util")
 
-local client = vim.lsp.start_client({
-    name = "gdx",
-    cmd = { os.getenv("HOME") .. "/dev/go/gdx/gdx", "-workspace", cwd },
-})
+function get_root_dir()
+    return util.root_pattern("project.godot")(cwd)
+end
 
-vim.api.nvim_create_autocmd("FileType", {
-    pattern = { "gdscript" },
-    callback = function()
-        vim.lsp.buf_attach_client(0, client)
-    end,
-})
+vim.lsp.config['gdx'] = {
+    cmd = { os.getenv("HOME") .. "/dev/go/gdx/gdx" },
+    root_dir = get_root_dir(),
+    filetypes = { "gdscript" }
+}
+
+vim.lsp.enable("gdx")
 ```
+Note this config requires Neovim 0.11+
 
 Currently VSCode is unsupported however I plan to create an extension in the future to work with GDX.
 

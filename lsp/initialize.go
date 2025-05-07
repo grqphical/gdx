@@ -21,10 +21,10 @@ type WorkspaceFolder struct {
 
 type InitializeRequestParams struct {
 	ClientInfo struct {
-		Name             string            `json:"name"`
-		Version          string            `json:"version,omitempty"`
-		WorkspaceFolders []WorkspaceFolder `json:"workspaceFolders,omitempty"`
+		Name    string `json:"name"`
+		Version string `json:"version,omitempty"`
 	} `json:"clientInfo"`
+	RootPath string `json:"rootPath"`
 }
 
 type InitializeResponse struct {
@@ -50,17 +50,20 @@ type ServerCapabilities struct {
 	CompletionProvider CompletionOptions `json:"completionProvider"`
 }
 
-func HandleInitialize(content []byte, logger *log.Logger) error {
+func HandleInitialize(content []byte, logger *log.Logger, state *ServerState) error {
 	var request InitializeRequest
 	if err := json.Unmarshal(content, &request); err != nil {
 		return err
 	}
 
 	logger.Printf(
-		"connected to client %s, version %s\n",
+		"connected to client %s, version %s, workspace %s\n",
 		request.Params.ClientInfo.Name,
 		request.Params.ClientInfo.Version,
+		request.Params.RootPath,
 	)
+
+	state.WorkspacePath = request.Params.RootPath
 
 	var response InitializeResponse = InitializeResponse{
 		Result: InitializeResult{

@@ -11,6 +11,6 @@ type RegistrationParams struct {
 	Registrations []Registration `json:"registrations"`
 }
 
-func HandleInitialized(logger *log.Logger) {
+func HandleInitialized(logger *log.Logger, state *ServerState) {
 
 }
