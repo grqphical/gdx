@@ -1,11 +1,14 @@
 package lsp
 
+import "gdx/analysis"
+
 const ServerName string = "gdx"
 
 type ServerState struct {
 	Shutdown      bool
 	WorkspacePath string
 	Files         map[string]string
+	ProjectConfig analysis.GodotProjectFile
 }
 
 type RequestMessage struct {

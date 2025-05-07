@@ -35,6 +35,8 @@ func handleMessage(method string, content []byte, logger *log.Logger, state *lsp
 		switch method {
 		case "initialize":
 			return lsp.HandleInitialize(content, logger, state)
+		case "initialized":
+			return lsp.HandleInitialized(logger, state)
 		case "shutdown":
 			lsp.HandleShutdown(state, logger)
 			return nil
